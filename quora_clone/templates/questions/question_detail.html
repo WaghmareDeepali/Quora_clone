@@ -1,0 +1,114 @@
+{% extends 'questions/base.html' %}
+
+{% block title %}{{ question.title }} - Quora Clone{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <!-- Question -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">{{ question.title }}</h2>
+                <p class="card-text">{{ question.content }}</p>
+                <p class="text-muted">
+                    Asked by {{ question.author.username }} on {{ question.created_at|date:"F d, Y" }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Answers -->
+        <h3>{{ answers.count }} Answer{{ answers.count|pluralize }}</h3>
+        
+        {% if answers %}
+            {% for answer in answers %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <p class="text-muted">
+                            Answered by {{ answer.author.username }} on {{ answer.created_at|date:"F d, Y" }}
+                        </p>
+                        
+                        <div class="d-flex align-items-center">
+                            {% if user.is_authenticated %}
+                            <span class="like-btn {% if user in answer.likes.all %}liked{% endif %}" 
+                                  data-answer-id="{{ answer.pk }}" 
+                                  data-url="{% url 'like_answer' pk=answer.pk %}">
+                                ❤
+                            </span>
+                            {% else %}
+                            <span>❤</span>
+                            {% endif %}
+                            <span class="ms-1 like-count">{{ answer.like_count }}</span>
+                        </div>
+                    </div>
+                    <p class="card-text">{{ answer.content }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                No answers yet. Be the first to answer!
+            </div>
+        {% endif %}
+
+        <!-- Post an answer -->
+        {% if user.is_authenticated %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4>Your Answer</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="mb-3">
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ field.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <button type="submit" class="btn btn-primary">Post Answer</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning mt-4">
+            Please <a href="{% url 'login' %}">login</a> to answer this question.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.like-btn').click(function() {
+            var btn = $(this);
+            var answerId = btn.data('answer-id');
+            var url = btn.data('url');
+            
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    if (data.liked) {
+                        btn.addClass('liked');
+                    } else {
+                        btn.removeClass('liked');
+                    }
+                    btn.siblings('.like-count').text(data.like_count);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
