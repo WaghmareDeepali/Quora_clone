@@ -18,7 +18,7 @@ A functional Quora-inspired Q&A web application built with Django. This project 
 *The home page displays all questions posted by users.*
 
 ### User Registration
-![Registration Page](./screenshots/register.png)
+![Registration Page](./screenshots/register.PNG)
 *New users can create an account through this registration form.*
 
 ### Login Page
